@@ -2,6 +2,13 @@ const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const { generateToken } = require("../utils/tokens");
 const validateId = require("../utils/validateId");
+const fs = require("fs")
+const handlebars = require("handlebars");
+const sendEmail = require("../utils/email");
+
+const emailTemplateSource = fs.readFileSync("./src/email/registeration.hbs", "utf8") 
+
+const emailTemplate = handlebars.compile(emailTemplateSource)
 
 const register = asyncHandler(async (req, res) => {
   const username = req.body.username;
@@ -9,6 +16,17 @@ const register = asyncHandler(async (req, res) => {
 
   if (!findUser) {
     const newUser = await User.create(req.body);
+    const templateData = {
+      subject: "Welcome to coderblack, Please verify your email"
+    }
+
+    const emailHtml = emailTemplate(templateData)
+
+    await sendEmail({
+      subject: "Welcome to coderblack, Please verify your email",
+      email: newUser.email,
+      emailHtml
+    })
 
     const { password: userPassword, ...savedDetails } = newUser.toObject();
 
