@@ -9,6 +9,8 @@ const {
   verifyUser,
   regenerateOtp,
   forgetPassword,
+  addFavouriteToWishList,
+  getWishlist,
 } = require("../controllers/userCtrl");
 const isAuthenticated = require("../middlewares/authMiddleware");
 
@@ -16,12 +18,15 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
-router.get("/:id", getUserById);
+router.get("/forgot-password", forgetPassword);
 router.get("", isAuthenticated, getUser);
+router.post("/regenerate-otp", isAuthenticated, regenerateOtp);
+router.post("/verify", isAuthenticated, verifyUser);
+router.get("/wishlist", isAuthenticated, getWishlist);
+
+router.get("/:id", getUserById);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
-router.post("/verify", isAuthenticated, verifyUser);
-router.post("/regenerate-otp", isAuthenticated, regenerateOtp);
-router.get("/forgot-password", forgetPassword);
+router.put("/wishlist/:id", isAuthenticated, addFavouriteToWishList);
 
 module.exports = router;

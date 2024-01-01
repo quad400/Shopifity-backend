@@ -5,6 +5,7 @@ const User = require("../models/userModel");
 const Cart = require("../models/cartModel");
 const validateId = require("../utils/validateId");
 
+
 const createProduct = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
@@ -95,18 +96,24 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 const getAllProduct = asyncHandler(async (req, res) => {
-  // Filtering
   try {
+    // Filtering
     const queryObj = { ...req.query };
-    const excludeFields = ["page", "sort", "limit", "fields"];
+    const excludeFields = ["page", "sort", "limit", "fields", "search"];
     excludeFields.forEach((el) => delete queryObj[el]);
+
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
     let query = Product.find(JSON.parse(queryStr));
 
-    // Sorting
+    // Add the search parameter to the query
+    const { search } = req.query;
+    if (search) {
+      query = query.find({ title: { $regex: search, $options: "i" } });
+    }
 
+    // Sorting
     if (req.query.sort) {
       const sortBy = req.query.sort.split(",").join(" ");
       query = query.sort(sortBy);
@@ -114,8 +121,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
       query = query.sort("-createdAt");
     }
 
-    // limiting the fields
-
+    // Limiting the fields
     if (req.query.fields) {
       const fields = req.query.fields.split(",").join(" ");
       query = query.select(fields);
@@ -123,20 +129,24 @@ const getAllProduct = asyncHandler(async (req, res) => {
       query = query.select("-__v");
     }
 
-    // pagination
-
+    // Pagination
     const page = req.query.page;
     const limit = req.query.limit;
     const skip = (page - 1) * limit;
     query = query.skip(skip).limit(limit);
+
     if (req.query.page) {
       const productCount = await Product.countDocuments();
-      if (skip >= productCount) throw new Error("This Page does not exists");
+      if (skip >= productCount) {
+        throw new Error("This Page does not exist");
+      }
     }
-    const product = await query;
-    res.json(product);
+
+    const products = await query;
+    res.json(products);
   } catch (error) {
-    throw new Error(error);
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -207,12 +217,14 @@ const emptyCart = asyncHandler(async (req, res) => {
   validateId(_id);
 
   try {
-    const getCart = await Cart.findOneAndDelete({ order_by: _id });
-    res.json(getCart);
+    await Cart.findOneAndDelete({ order_by: _id });
+    res.json({ message: "Successfully delete cart" });
   } catch (error) {
     throw new Error(error);
   }
 });
+
+
 
 module.exports = {
   createProduct,

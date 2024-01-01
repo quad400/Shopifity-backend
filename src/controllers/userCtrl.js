@@ -9,6 +9,7 @@ const {
   emailTemplateSourceResendOTP,
   emailTemplateSourceForgotPassword,
 } = require("../utils/emailTemplates");
+const Product = require("../models/productModel");
 
 const register = asyncHandler(async (req, res) => {
   const email = req.body.email;
@@ -31,12 +32,6 @@ const login = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email: email });
   if (user && (await user.isPasswordMatched(password))) {
-    // const refreshToken = ;
-    // await User.findByIdAndUpdate(s
-    //   user?._id,
-    //   { refreshToken: refreshToken },
-    //   { new: true }
-    // );
     const code = user?.generateRegisterationCode();
     await user.save();
     if (!user?.email_verified) {
@@ -199,6 +194,52 @@ const forgetPassword = asyncHandler(async (req, res) => {
   }
 });
 
+const addFavouriteToWishList = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+
+  const { id } = req.params;
+  validateId(id)
+  try {
+    const favourite = await Product.findById(id);
+
+    let user = await User.findById(_id);
+
+    const alreadyAdded = user.wishlist.find(
+      (product) => product._id.toString() === id
+    );
+
+    if (alreadyAdded) {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $pull: { wishlist: favourite } },
+        { new: true }
+      );
+    }
+    const addtofav = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { wishlist: favourite } },
+      { new: true }
+    );
+
+    res.json(addtofav);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const getWishlist = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  // console.log(_id)
+  validateId(_id);
+
+  try {
+    const user = await User.findById(_id).populate("wishlist");
+    res.json(user);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   register,
   login,
@@ -208,5 +249,7 @@ module.exports = {
   updateUser,
   verifyUser,
   regenerateOtp,
-  forgetPassword
+  forgetPassword,
+  addFavouriteToWishList,
+  getWishlist
 };

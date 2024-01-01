@@ -9,12 +9,12 @@ const userRoute = require("./src/routes/userRoute")
 const productRoute = require("./src/routes/productRoute")
 const productCategoryRoute = require("./src/routes/productCategoryRoute")
 const uploadRoute = require("./src/routes/uploadRoute")
+const cartRoute = require("./src/routes/cartRoute")
+const couponRoute = require("./src/routes/couponRoute")
 
 
 const dbConnect = require("./src/config/db")
 const { notFound, errorHandler } = require("./src/middlewares/errorMiddleware")
-const { getCart, emptyCart } = require("./src/controllers/productCtrl")
-const isAuthenticated = require("./src/middlewares/authMiddleware")
 require("dotenv").config()
 
 const app = express()
@@ -37,9 +37,10 @@ app.use("/api/user", userRoute)
 app.use("/api/product", productRoute)
 app.use("/api/category", productCategoryRoute)
 app.use("/api/upload", uploadRoute)
-// cart
-app.get("/api/cart", isAuthenticated, getCart)
-app.delete("/api/cart", isAuthenticated, emptyCart)
+app.use("/api/cart", cartRoute)
+app.use("/api/coupon", couponRoute)
+
+
 
 
 
