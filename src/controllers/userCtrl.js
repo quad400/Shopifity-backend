@@ -1,4 +1,7 @@
 const User = require("../models/userModel");
+const Product = require("../models/productModel");
+const Coupon = require("../models/couponModel");
+const Cart = require("../models/cartModel");
 const asyncHandler = require("express-async-handler");
 const { generateToken } = require("../utils/tokens");
 const validateId = require("../utils/validateId");
@@ -9,7 +12,6 @@ const {
   emailTemplateSourceResendOTP,
   emailTemplateSourceForgotPassword,
 } = require("../utils/emailTemplates");
-const Product = require("../models/productModel");
 
 const register = asyncHandler(async (req, res) => {
   const email = req.body.email;
@@ -132,7 +134,9 @@ const getUserById = asyncHandler(async (req, res) => {
 
 const getUser = asyncHandler(async (req, res) => {
   const user = req.user;
-  res.json(user);
+
+  const getUser = await User.findOne(user).populate("cart").exec();
+  res.json(getUser);
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
@@ -198,7 +202,7 @@ const addFavouriteToWishList = asyncHandler(async (req, res) => {
   const { _id } = req.user;
 
   const { id } = req.params;
-  validateId(id)
+  validateId(id);
   try {
     const favourite = await Product.findById(id);
 
@@ -229,12 +233,32 @@ const addFavouriteToWishList = asyncHandler(async (req, res) => {
 
 const getWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  // console.log(_id)
   validateId(_id);
 
   try {
     const user = await User.findById(_id).populate("wishlist");
     res.json(user);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const applyCoupon = asyncHandler(async (req, res) => {
+  const { coupon } = req.body;
+  const { _id } = req.user;
+
+  try {
+    const findCoupon = await Coupon.findOne({ name: coupon });
+    if (!findCoupon) throw new Error("Invalid Coupon");
+    if (findCoupon.expire < Date.now()) throw new Error("Coupon has expire");
+
+    const cart = await Cart.findOne({ order_by: _id }).select("cartTotal");
+
+    cart.cartTotal = cart.cartTotal * (findCoupon.discount / 100);
+    await cart.save();
+    res.json({
+      message: "Successfully applied coupon",
+    });
   } catch (error) {
     throw new Error(error);
   }
@@ -251,5 +275,6 @@ module.exports = {
   regenerateOtp,
   forgetPassword,
   addFavouriteToWishList,
-  getWishlist
+  getWishlist,
+  applyCoupon,
 };

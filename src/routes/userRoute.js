@@ -11,6 +11,7 @@ const {
   forgetPassword,
   addFavouriteToWishList,
   getWishlist,
+  applyCoupon,
 } = require("../controllers/userCtrl");
 const isAuthenticated = require("../middlewares/authMiddleware");
 
@@ -23,6 +24,7 @@ router.get("", isAuthenticated, getUser);
 router.post("/regenerate-otp", isAuthenticated, regenerateOtp);
 router.post("/verify", isAuthenticated, verifyUser);
 router.get("/wishlist", isAuthenticated, getWishlist);
+router.post("/applycoupon", isAuthenticated, applyCoupon);
 
 router.get("/:id", getUserById);
 router.put("/:id", updateUser);

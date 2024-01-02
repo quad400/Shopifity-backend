@@ -5,7 +5,6 @@ const User = require("../models/userModel");
 const Cart = require("../models/cartModel");
 const validateId = require("../utils/validateId");
 
-
 const createProduct = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
@@ -29,7 +28,6 @@ const getProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
     validateId(id);
     const getProduct = await Product.findById(id)
-      .populate("brand")
       .populate("category");
 
     if (!getProduct) {
@@ -159,10 +157,8 @@ const addProductToCart = asyncHandler(async (req, res) => {
   try {
     let products = [];
 
-    const user = User.findById(_id);
-
     // check if product is aready in cart
-    const productInCart = await Cart.findOne({ order_by: user._id });
+    const productInCart = await Cart.findOne({ order_by: _id });
 
     if (productInCart) {
       productInCart.deleteOne();
@@ -178,12 +174,9 @@ const addProductToCart = asyncHandler(async (req, res) => {
       products.push(object);
     }
 
-    console.log(products);
-
     let cartTotal = 0;
     for (let i = 0; i < products.length; i++) {
       cartTotal = cartTotal + products[i].price * products[i].count;
-      // console.log(cartTotal)
     }
 
     let newCart = await new Cart({
@@ -191,6 +184,8 @@ const addProductToCart = asyncHandler(async (req, res) => {
       cartTotal,
       order_by: _id,
     }).save();
+
+    await User.findByIdAndUpdate(_id, {cart: newCart}, { new: true });
 
     res.json(newCart);
   } catch (error) {
@@ -223,8 +218,6 @@ const emptyCart = asyncHandler(async (req, res) => {
     throw new Error(error);
   }
 });
-
-
 
 module.exports = {
   createProduct,

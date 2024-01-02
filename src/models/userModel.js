@@ -36,8 +36,8 @@ var userSchema = new mongoose.Schema(
       default: [],
     },
     cart: {
-      type: Array,
-      default: [],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coupon",
     },
     registrationCode: {
       type: String,
