@@ -252,6 +252,8 @@ const applyCoupon = asyncHandler(async (req, res) => {
     if (!findCoupon) throw new Error("Invalid Coupon");
     if (findCoupon.expire < Date.now()) throw new Error("Coupon has expire");
 
+    if (findCoupon.applied === true)
+      throw new Error("This coupon has been used");
     const cart = await Cart.findOne({ order_by: _id }).select("cartTotal");
 
     cart.cartTotal = cart.cartTotal * (findCoupon.discount / 100);

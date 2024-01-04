@@ -11,6 +11,7 @@ const productCategoryRoute = require("./src/routes/productCategoryRoute")
 const uploadRoute = require("./src/routes/uploadRoute")
 const cartRoute = require("./src/routes/cartRoute")
 const couponRoute = require("./src/routes/couponRoute")
+const orderRoute = require("./src/routes/orderRoute")
 
 
 const dbConnect = require("./src/config/db")
@@ -39,8 +40,7 @@ app.use("/api/category", productCategoryRoute)
 app.use("/api/upload", uploadRoute)
 app.use("/api/cart", cartRoute)
 app.use("/api/coupon", couponRoute)
-
-
+app.use("/api/order", orderRoute)
 
 
 

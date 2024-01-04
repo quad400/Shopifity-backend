@@ -27,8 +27,7 @@ const getProduct = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     validateId(id);
-    const getProduct = await Product.findById(id)
-      .populate("category");
+    const getProduct = await Product.findById(id).populate("category");
 
     if (!getProduct) {
       throw new Error("Product with this id not found");
@@ -148,50 +147,78 @@ const getAllProduct = asyncHandler(async (req, res) => {
   }
 });
 
-const addProductToCart = asyncHandler(async (req, res) => {
-  const { _id } = req.user;
-  const { cart } = req.body;
-
-  validateId(_id);
-
+const addToCart = asyncHandler(async (req, res) => {
   try {
-    let products = [];
+    const userId = req.user._id;
+    const { productId, quantity, size, color } = req.body;
 
-    // check if product is aready in cart
-    const productInCart = await Cart.findOne({ order_by: _id });
-
-    if (productInCart) {
-      productInCart.deleteOne();
+    // Check if the product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
     }
 
-    for (let i = 0; i < cart.length; i++) {
-      let object = {};
-      object.product = cart[i]._id;
-      object.count = cart[i].count;
-      object.color = cart[i].color;
-      let getPrice = await Product.findById(cart[i]._id).select("price").exec();
-      object.price = getPrice.price;
-      products.push(object);
+    // Check if the user has a cart, create one if not
+    let cart = await Cart.findOne({ order_by: userId });
+
+    if (!cart) {
+      cart = new Cart({ order_by: userId, products: [] });
     }
 
-    let cartTotal = 0;
-    for (let i = 0; i < products.length; i++) {
-      cartTotal = cartTotal + products[i].price * products[i].count;
+    // Check if the product is already in the cart, update quantity if so, add otherwise
+    const existingProductIndex = cart.products.findIndex((p) =>
+      p.product.equals(productId)
+    );
+
+    if (existingProductIndex !== -1) {
+      cart.products[existingProductIndex].quantity += quantity;
+    } else {
+      cart.products.push({ product: productId, quantity, size, color });
     }
 
-    let newCart = await new Cart({
-      products,
-      cartTotal,
-      order_by: _id,
-    }).save();
+    // Update total based on the current prices and quantities
+    cart.cartTotal = cart.products.reduce((total, cartItem) => {
+      const productPrice = product.price;
+      return total + productPrice * cartItem.quantity;
+    }, 0);
 
-    await User.findByIdAndUpdate(_id, {cart: newCart}, { new: true });
+    await cart.save();
 
-    res.json(newCart);
+    res.json(cart);
   } catch (error) {
-    throw new Error(error);
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+const removeFromCart = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    const cart = await Cart.findOne({ order_by: userId });
+
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
+    // Remove the product from the cart
+    cart.products = cart.products.filter((p) => !p.product.equals(id));
+
+    // Update the total
+    cart.total = cart.products.reduce((total, cartItem) => {
+      const productPrice = cartItem.product.price;
+      return total + productPrice * cartItem.quantity;
+    }, 0);
+
+    await cart.save();
+
+    res.json(cart);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 const getCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
@@ -207,25 +234,13 @@ const getCart = asyncHandler(async (req, res) => {
   }
 });
 
-const emptyCart = asyncHandler(async (req, res) => {
-  const { _id } = req.user;
-  validateId(_id);
-
-  try {
-    await Cart.findOneAndDelete({ order_by: _id });
-    res.json({ message: "Successfully delete cart" });
-  } catch (error) {
-    throw new Error(error);
-  }
-});
-
 module.exports = {
   createProduct,
   getProduct,
   updateProduct,
   deleteProduct,
   getAllProduct,
-  addProductToCart,
   getCart,
-  emptyCart,
+  addToCart,
+  removeFromCart,
 };
