@@ -234,6 +234,44 @@ const getCart = asyncHandler(async (req, res) => {
   }
 });
 
+const rateProduct = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { star, comment } = req.body;
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) throw new Error("Product not found");
+
+    const existingRating = product.ratings.find((rating) =>
+      rating.postedBy.equals(userId)
+    );
+
+    if (existingRating) throw new Error("You have already rate this product");
+
+    product.ratings.push({
+      star,
+      comment,
+      postedBy: userId,
+    });
+
+    const totalStar = product.ratings.reduce(
+      (total, rating) => total + rating.star,
+      0
+    );
+
+    product.averageRating = totalStar / product.ratings.length;
+    product.totalRating = totalStar;
+
+    await product.save();
+
+    res.json(product);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createProduct,
   getProduct,
@@ -243,4 +281,5 @@ module.exports = {
   getCart,
   addToCart,
   removeFromCart,
+  rateProduct,
 };

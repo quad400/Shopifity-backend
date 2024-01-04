@@ -1,5 +1,23 @@
 const { default: mongoose } = require("mongoose");
 
+const ratingSchema = new mongoose.Schema({
+  star: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+  comment: {
+    type: String,
+    trim: true,
+  },
+  postedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+});
+
 const productSchema = new mongoose.Schema(
   {
     title: {
@@ -30,19 +48,11 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    type: String,
     colors: [String],
     sizes: [String],
-    ratings: [
-      {
-        star: Number,
-        comment: String,
-        postedBy: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-      },
-    ],
+    ratings: [ratingSchema],
+    averageRating: Number,
+    totalRating: Number,
     images: {
       type: [String],
       required: true,
