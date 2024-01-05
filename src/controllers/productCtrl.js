@@ -1,9 +1,7 @@
 const asyncHandler = require("express-async-handler");
-const Product = require("../models/productModel");
-const ProductCategory = require("../models/categoryModel");
-const User = require("../models/userModel");
-const Cart = require("../models/cartModel");
 const validateId = require("../utils/validateId");
+const Product = require("../models/productModel");
+const Cart = require("../models/cartModel");
 
 const createProduct = asyncHandler(async (req, res) => {
   try {

@@ -52,7 +52,6 @@ const productSchema = new mongoose.Schema(
     sizes: [String],
     ratings: [ratingSchema],
     averageRating: Number,
-    totalRating: Number,
     images: {
       type: [String],
       required: true,

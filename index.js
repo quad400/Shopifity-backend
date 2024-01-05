@@ -12,6 +12,7 @@ const uploadRoute = require("./src/routes/uploadRoute")
 const cartRoute = require("./src/routes/cartRoute")
 const couponRoute = require("./src/routes/couponRoute")
 const orderRoute = require("./src/routes/orderRoute")
+const specialFilterRoute = require("./src/routes/specialFilterRoute")
 
 
 const dbConnect = require("./src/config/db")
@@ -41,6 +42,7 @@ app.use("/api/upload", uploadRoute)
 app.use("/api/cart", cartRoute)
 app.use("/api/coupon", couponRoute)
 app.use("/api/order", orderRoute)
+app.use("/api/special", specialFilterRoute)
 
 
 
