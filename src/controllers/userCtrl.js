@@ -172,8 +172,8 @@ const forgetPassword = asyncHandler(async (req, res) => {
   try {
     const emailTemplate = handlebars.compile(emailTemplateSourceForgotPassword);
 
-    const user = await User.findOne({email:email});
-    if (!user) throw new Error("No user with this email")
+    const user = await User.findOne({ email: email });
+    if (!user) throw new Error("No user with this email");
     const code = user.generateRegisterationCode();
 
     await user.save();
@@ -212,23 +212,30 @@ const addFavouriteToWishList = asyncHandler(async (req, res) => {
     const alreadyAdded = user.wishlist.find(
       (product) => product._id.toString() === id
     );
-
+    console.log("alreadyAdded: ", alreadyAdded);
     if (alreadyAdded) {
       await User.findByIdAndUpdate(
         user._id,
         { $pull: { wishlist: favourite } },
         { new: true }
       );
+    } else {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $push: { wishlist: favourite } },
+        { new: true }
+      );
     }
-    const addtofav = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { wishlist: favourite } },
-      { new: true }
-    );
 
-    res.json(addtofav);
+    const updatedUser = await User.findById(_id);
+    res.json({
+      data: updatedUser,
+    });
   } catch (error) {
-    throw new Error(error);
+    res.json({
+      status: "fail",
+      message: error.message
+    })
   }
 });
 
