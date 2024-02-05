@@ -172,7 +172,8 @@ const forgetPassword = asyncHandler(async (req, res) => {
   try {
     const emailTemplate = handlebars.compile(emailTemplateSourceForgotPassword);
 
-    const user = await User.findOne(email);
+    const user = await User.findOne({email:email});
+    if (!user) throw new Error("No user with this email")
     const code = user.generateRegisterationCode();
 
     await user.save();

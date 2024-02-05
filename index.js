@@ -32,8 +32,8 @@ cloudinary.config({
 app.use(morgan("dev"));
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended: false}));
 
 app.use("/api/user", userRoute)
 app.use("/api/product", productRoute)
@@ -47,7 +47,9 @@ app.use("/api/special", specialFilterRoute)
 
 
 
-
+app.get("/", (req, res)=> {
+  res.send("Shopifity is now running live 🚀")
+})
 app.use(notFound)
 app.use(errorHandler)
 

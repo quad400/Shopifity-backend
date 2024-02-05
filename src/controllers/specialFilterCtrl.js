@@ -80,11 +80,16 @@ const removeSpecialFilter = asyncHandler(async (req, res) => {
     const alreadyExist = findSpecial.products.findIndex((prod) =>
       prod.equals(productId)
     );
-    console.log(alreadyExist);
-    if (alreadyExist !== 0) throw new Error("Product not found in special");
 
-    findSpecial.products.filter((prod) => !prod.equals(productId));
-    await findSpecial.save();
+    console.log(alreadyExist)
+
+    if (alreadyExist === 0) {
+      findSpecial.products.filter((prod) => prod.toString()===productId);
+      // console.log(findSpecial)
+      await findSpecial.save();
+    } else {
+      throw new Error("Product not found in special");
+    }
 
     res.json({ message: "Successfull remove product" });
   } catch (error) {

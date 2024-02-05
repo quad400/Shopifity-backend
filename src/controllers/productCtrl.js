@@ -25,7 +25,9 @@ const getProduct = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     validateId(id);
-    const getProduct = await Product.findById(id).populate("category");
+    const getProduct = await Product.findById(id)
+      .populate("category")
+      .populate("ratings.postedBy");
 
     if (!getProduct) {
       throw new Error("Product with this id not found");
@@ -94,7 +96,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
   try {
     // Filtering
     const queryObj = { ...req.query };
-    const excludeFields = ["page", "sort", "limit", "fields", "search"];
+    const excludeFields = ["page", "sort", "limit", "fields", "s"];
     excludeFields.forEach((el) => delete queryObj[el]);
 
     let queryStr = JSON.stringify(queryObj);
@@ -103,9 +105,9 @@ const getAllProduct = asyncHandler(async (req, res) => {
     let query = Product.find(JSON.parse(queryStr));
 
     // Add the search parameter to the query
-    const { search } = req.query;
-    if (search) {
-      query = query.find({ title: { $regex: search, $options: "i" } });
+    const { s } = req.query;
+    if (s) {
+      query = query.find({ title: { $regex: s, $options: "i" } });
     }
 
     // Sorting
@@ -125,20 +127,29 @@ const getAllProduct = asyncHandler(async (req, res) => {
     }
 
     // Pagination
-    const page = req.query.page;
-    const limit = req.query.limit;
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 2;
     const skip = (page - 1) * limit;
     query = query.skip(skip).limit(limit);
+    // const pageCount =
 
+    let productCount = 0;
     if (req.query.page) {
-      const productCount = await Product.countDocuments();
+      productCount = await Product.countDocuments();
       if (skip >= productCount) {
         throw new Error("This Page does not exist");
       }
     }
-
     const products = await query;
-    res.json(products);
+    const totalPage = Math.ceil(productCount / limit);
+
+    return res.json({
+      status: "successful",
+      totalProduct: productCount,
+      totalPage: totalPage,
+      page: page,
+      products: products,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -170,6 +181,60 @@ const addToCart = asyncHandler(async (req, res) => {
 
     if (existingProductIndex !== -1) {
       cart.products[existingProductIndex].quantity += quantity;
+    } else {
+      cart.products.push({ product: productId, quantity, size, color });
+    }
+
+    // Update total based on the current prices and quantities
+    cart.cartTotal = cart.products.reduce((total, cartItem) => {
+      const productPrice = product.price;
+      return total + productPrice * cartItem.quantity;
+    }, 0);
+
+    await cart.save();
+
+    res.json(cart);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+const deductFromCart = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { productId, size, color } = req.body;
+
+    let quantity = 1;
+
+    // Check if the product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Check if the user has a cart, create one if not
+    let cart = await Cart.findOne({ order_by: userId });
+
+    if (!cart) {
+      cart = new Cart({ order_by: userId, products: [] });
+    }
+
+    // Check if the product is already in the cart, update quantity if so, add otherwise
+    const existingProductIndex = cart.products.findIndex((p) =>
+      p.product.equals(productId)
+    );
+
+    if (existingProductIndex !== -1) {
+      if (cart.products[existingProductIndex].quantity >= 1) {
+        cart.products[existingProductIndex].quantity -= quantity;
+      } else {
+        cart.products = cart.products.filter((p) => !p.product.equals(id));
+        cart.cartTotal = 0;
+        await cart.save();
+        return;
+      }
     } else {
       cart.products.push({ product: productId, quantity, size, color });
     }
@@ -280,4 +345,5 @@ module.exports = {
   addToCart,
   removeFromCart,
   rateProduct,
+  deductFromCart
 };

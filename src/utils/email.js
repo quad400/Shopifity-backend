@@ -13,7 +13,6 @@ const sendEmail = async({subject, email, emailHtml})=>{
         }
     })
 
-
     const mailOptions= {
         from: "Shopifity <adedijiabdulquadr@gmail.com>",
         to: email,

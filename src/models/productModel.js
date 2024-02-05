@@ -16,6 +16,11 @@ const ratingSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  createdAt: {
+    type: Date,
+    required: true,
+    default: Date.now()
+  }
 });
 
 const productSchema = new mongoose.Schema(
@@ -32,6 +37,10 @@ const productSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
+    },
+    discount_percent: {
+      type: Number,
+      default: 0
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
