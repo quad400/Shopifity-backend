@@ -96,7 +96,18 @@ const getAllProduct = asyncHandler(async (req, res) => {
   try {
     // Filtering
     const queryObj = { ...req.query };
-    const excludeFields = ["page", "sort", "limit", "fields", "s"];
+    const excludeFields = [
+      "page",
+      "sort",
+      "limit",
+      "fields",
+      "s",
+      "category",
+      "stock",
+      "color",
+      "size",
+      "price",
+    ];
     excludeFields.forEach((el) => delete queryObj[el]);
 
     let queryStr = JSON.stringify(queryObj);
@@ -109,6 +120,30 @@ const getAllProduct = asyncHandler(async (req, res) => {
     if (s) {
       query = query.find({ title: { $regex: s, $options: "i" } });
     }
+
+    // category
+    const { category } = req.query;
+    if (category) {
+      query = query.find({ category });
+    }
+    
+    // color
+    const { color } = req.query;
+    if (color) {
+      query = query.find({colors: color});
+    }
+    // size
+    const { size } = req.query;
+    if (size) {
+      query = query.find({ sizes: size });
+    }
+
+    // stock
+    const { stock } = req.query;
+    if (stock) {
+      query = query.find({ stock });
+    }
+    
 
     // Sorting
     if (req.query.sort) {
@@ -131,6 +166,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
     const limit = req.query.limit * 1 || 2;
     const skip = (page - 1) * limit;
     query = query.skip(skip).limit(limit);
+
     // const pageCount =
 
     let productCount = 0;
@@ -199,7 +235,6 @@ const addToCart = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 const deductFromCart = asyncHandler(async (req, res) => {
   try {
@@ -345,5 +380,5 @@ module.exports = {
   addToCart,
   removeFromCart,
   rateProduct,
-  deductFromCart
+  deductFromCart,
 };
