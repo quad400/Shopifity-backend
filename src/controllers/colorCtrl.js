@@ -1,14 +1,14 @@
 const User = require("../models/userModel");
-const ProductCategory = require("../models/categoryModel");
+const {ColorModel: Color} = require("../models/categoryModel");
 const asyncHandler = require("express-async-handler");
 const validateId = require("../utils/validateId");
 
-const createProductCategory = asyncHandler(async (req, res) => {
+const createColor = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
     const findAdmin = await User.findById(user?._id);
     if (findAdmin?.role === "admin") {
-      const newCategory = await ProductCategory.create(req.body);
+      const newCategory = await Color.create(req.body);
       res.status(201).json(newCategory);
       return;
     }
@@ -19,12 +19,12 @@ const createProductCategory = asyncHandler(async (req, res) => {
 });
 
 
-const updateProductCategory = asyncHandler(async (req, res) => {
+const updateColor = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
     validateId(id);
-    const updateCategory = await ProductCategory.findByIdAndUpdate(
+    const updateCategory = await Color.findByIdAndUpdate(
       id,
       req.body,
       { new: true }
@@ -36,12 +36,12 @@ const updateProductCategory = asyncHandler(async (req, res) => {
 });
 
 
-const getProductCategory = asyncHandler(async (req, res) => {
+const getColor = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
     validateId(id);
-    const getCategory = await ProductCategory.findById(id);
+    const getCategory = await Color.findById(id);
     res.json(getCategory);
   } catch (error) {
     throw new Error(error);
@@ -49,10 +49,10 @@ const getProductCategory = asyncHandler(async (req, res) => {
 });
 
 
-const getAllProductCategory = asyncHandler(async (req, res) => {
+const getAllColor = asyncHandler(async (req, res) => {
   try {
 
-    const getCategories = await ProductCategory.find();
+    const getCategories = await Color.find();
     res.json(getCategories);
   } catch (error) {
     throw new Error(error);
@@ -60,15 +60,15 @@ const getAllProductCategory = asyncHandler(async (req, res) => {
 });
 
 
-const deleteProductCategory = asyncHandler(async (req, res) => {
+const deleteColor = asyncHandler(async (req, res) => {
     try {
       const { id } = req.params;
   
       validateId(id);
-      await ProductCategory.findByIdAndDelete(id);
+      await Color.findByIdAndDelete(id);
       res.json({
         status: "successful",
-        message: "category successfully deleted"
+        message: "color successfully deleted"
       });
 
     } catch (error) {
@@ -78,9 +78,9 @@ const deleteProductCategory = asyncHandler(async (req, res) => {
   
 
 module.exports = {
-  createProductCategory,
-  getAllProductCategory,
-  updateProductCategory,
-  getProductCategory,
-  deleteProductCategory
+  createColor,
+  getAllColor,
+  updateColor,
+  getColor,
+  deleteColor
 };

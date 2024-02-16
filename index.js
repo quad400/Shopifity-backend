@@ -1,27 +1,28 @@
-const express = require("express")
-const cors = require("cors")
-const morgan = require("morgan")
-const bodyParser = require("body-parser")
-const cookieParser = require("cookie-parser")
+const express = require("express");
+const cors = require("cors");
+const morgan = require("morgan");
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const cloudinary = require("cloudinary").v2;
 
-const userRoute = require("./src/routes/userRoute")
-const productRoute = require("./src/routes/productRoute")
-const productCategoryRoute = require("./src/routes/productCategoryRoute")
-const uploadRoute = require("./src/routes/uploadRoute")
-const cartRoute = require("./src/routes/cartRoute")
-const couponRoute = require("./src/routes/couponRoute")
-const orderRoute = require("./src/routes/orderRoute")
-const specialFilterRoute = require("./src/routes/specialFilterRoute")
+const userRoute = require("./src/routes/userRoute");
+const productRoute = require("./src/routes/productRoute");
+const categoryRoute = require("./src/routes/categoryRoute");
+const colorRoute = require("./src/routes/colorRoute");
+const sizeRoute = require("./src/routes/sizeRoute");
+const uploadRoute = require("./src/routes/uploadRoute");
+const cartRoute = require("./src/routes/cartRoute");
+const couponRoute = require("./src/routes/couponRoute");
+const orderRoute = require("./src/routes/orderRoute");
+const specialFilterRoute = require("./src/routes/specialFilterRoute");
 
+const dbConnect = require("./src/config/db");
+const { notFound, errorHandler } = require("./src/middlewares/errorMiddleware");
+require("dotenv").config();
 
-const dbConnect = require("./src/config/db")
-const { notFound, errorHandler } = require("./src/middlewares/errorMiddleware")
-require("dotenv").config()
+const app = express();
 
-const app = express()
-
-const port = process.env.PORT
+const port = process.env.PORT;
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -33,42 +34,40 @@ app.use(morgan("dev"));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use("/api/user", userRoute)
-app.use("/api/product", productRoute)
-app.use("/api/category", productCategoryRoute)
-app.use("/api/upload", uploadRoute)
-app.use("/api/cart", cartRoute)
-app.use("/api/coupon", couponRoute)
-app.use("/api/order", orderRoute)
-app.use("/api/special", specialFilterRoute)
+app.use("/api/user", userRoute);
+app.use("/api/product", productRoute);
+app.use("/api/category", categoryRoute);
+app.use("/api/color", colorRoute);
+app.use("/api/size", sizeRoute);
+app.use("/api/upload", uploadRoute);
+app.use("/api/cart", cartRoute);
+app.use("/api/coupon", couponRoute);
+app.use("/api/order", orderRoute);
+app.use("/api/special", specialFilterRoute);
 
+app.get("/", (req, res) => {
+  res.send("Shopifity is now running live 🚀");
+});
+app.use(notFound);
+app.use(errorHandler);
 
-
-
-app.get("/", (req, res)=> {
-  res.send("Shopifity is now running live 🚀")
-})
-app.use(notFound)
-app.use(errorHandler)
-
-app.listen(port, ()=>{
-    dbConnect()
-    console.log(`Server running on port ${port}`)
-})
+app.listen(port, () => {
+  dbConnect();
+  console.log(`Server running on port ${port}`);
+});
 
 process.on("uncaughtException", (err) => {
-    console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
-    console.log(err.name, err.message);
+  console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.log("UNHANDLED REJECTION! 💥 Shutting down...");
+  console.log(err.name, err.message);
+  server.close(() => {
     process.exit(1);
   });
-  
-  process.on("unhandledRejection", (err) => {
-    console.log("UNHANDLED REJECTION! 💥 Shutting down...");
-    console.log(err.name, err.message);
-    server.close(() => {
-      process.exit(1);
-    });
-  });
-  
+});
